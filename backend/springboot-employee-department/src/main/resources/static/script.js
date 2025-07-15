@@ -7,10 +7,22 @@ function searchEmployees() {
         return;
     }
 
-    fetch(`${API_URL}?departmentId=${deptId}`)
-        .then(res => res.json())
-        .then(data => populateTable(data))
-        .catch(err => console.error('Error fetching employees:', err));
+    // Make sure this matches your controller: /api/employees/by-department/{deptId}
+    fetch(`${API_URL}/by-department/${deptId}`)
+        .then(res => {
+            if (!res.ok) {
+                throw new Error('No employees found or invalid Department ID');
+            }
+            return res.json();
+        })
+        .then(data => {
+            populateTable(data);
+        })
+        .catch(err => {
+            console.error('Error fetching employees:', err);
+            alert(err.message || 'Failed to fetch employee data.');
+            document.getElementById('employeeTableBody').innerHTML = '';
+        });
 }
 
 function populateTable(employees) {
@@ -45,7 +57,6 @@ function editEmployee(emp) {
 
 function setupModal(emp, editable) {
     document.getElementById('modalTitle').textContent = editable ? 'Edit Employee' : 'Employee Details';
-
     document.getElementById('modalEmpId').value = emp.id;
     document.getElementById('modalName').value = emp.name;
     document.getElementById('modalPosition').value = emp.position;
@@ -54,7 +65,6 @@ function setupModal(emp, editable) {
     document.getElementById('modalName').disabled = !editable;
     document.getElementById('modalPosition').disabled = !editable;
     document.getElementById('modalEmail').disabled = !editable;
-
     document.getElementById('modalSaveBtn').style.display = editable ? 'inline-block' : 'none';
 
     openModal();
@@ -72,7 +82,7 @@ function deleteEmployee(empId) {
 }
 
 function saveEmployee(event) {
-    event.preventDefault(); // Prevent form reload
+    event.preventDefault();
 
     const id = document.getElementById('modalEmpId').value;
     const name = document.getElementById('modalName').value;
@@ -91,9 +101,7 @@ function saveEmployee(event) {
 
     fetch(`${API_URL}/${id}`, {
         method: 'PUT',
-        headers: {
-            'Content-Type': 'application/json'
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(updatedEmployee)
     })
         .then(res => {
@@ -119,11 +127,9 @@ function closeModal() {
     document.getElementById('employeeModal').style.display = 'none';
 }
 
-// Optional: Close modal on outside click
 window.onclick = function(event) {
     const modal = document.getElementById('employeeModal');
     if (event.target === modal) closeModal();
 };
 
-// Attach form submission handler
 document.getElementById('modalForm').addEventListener('submit', saveEmployee);
