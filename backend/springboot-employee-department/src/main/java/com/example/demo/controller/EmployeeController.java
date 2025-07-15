@@ -42,4 +42,10 @@ public class EmployeeController {
         System.out.println("DELETE /api/employees/" + id + " - Deleting employee");
         employeeService.deleteEmployee(id);
     }
+    @GetMapping("/by-department/{deptId}")
+    public List<Employee> getByDepartmentId(@PathVariable String deptId) {
+        System.out.println("GET /api/employees/by-department/" + deptId + " - Fetching employees");
+        return employeeService.getEmployeesByDepartmentId(deptId);
+    }
+
 }

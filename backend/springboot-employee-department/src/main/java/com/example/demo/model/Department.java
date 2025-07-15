@@ -1,6 +1,7 @@
 package com.example.demo.model;
 
 import com.fasterxml.jackson.annotation.JsonManagedReference;
+import org.hibernate.annotations.GenericGenerator;
 
 import javax.persistence.*;
 import java.util.List;
@@ -9,7 +10,10 @@ import java.util.List;
 public class Department {
 
     @Id
+    @GeneratedValue(generator = "uuid")
+    @GenericGenerator(name = "uuid", strategy = "org.hibernate.id.UUIDGenerator")
     private String id;
+
 
     private String name;
     private String location;
@@ -38,6 +42,13 @@ public class Department {
 
     public String getLocation() { return location; }
     public void setLocation(String location) { this.location = location; }
+    public void setDepartmentId(String departmentId) {
+        this.id = departmentId;
+    }
+
+    public String getDepartmentId() {
+        return id;
+    }
 
     public List<Employee> getEmployees() { return employees; }
     public void setEmployees(List<Employee> employees) { this.employees = employees; }
