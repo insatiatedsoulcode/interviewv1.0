@@ -10,8 +10,7 @@ import javax.persistence.*;
 public class Employee {
 
     @Id
-    @GeneratedValue(generator = "uuid")
-    @GenericGenerator(name = "uuid", strategy = "org.hibernate.id.UUIDGenerator")
+    @Column(name = "id")
     private String id;
 
     private String name;
@@ -54,4 +53,16 @@ public class Employee {
 
     public Department getDepartment() { return department; }
     public void setDepartment(Department department) { this.department = department; }
+    @Override
+    public String toString() {
+        return "Employee{" +
+                "id='" + id + '\'' +
+                ", name='" + name + '\'' +
+                ", email='" + email + '\'' +
+                ", position='" + position + '\'' +
+                ", salary=" + salary +
+                ", department=" + (department != null ? department.getId() : null) +
+                '}';
+    }
+
 }

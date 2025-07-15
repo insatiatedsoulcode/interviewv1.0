@@ -5,38 +5,62 @@ import com.example.demo.model.Employee;
 import com.example.demo.repository.DepartmentRepository;
 import com.example.demo.repository.EmployeeRepository;
 import com.example.demo.service.TransactionService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class TransactionServiceImpl implements TransactionService {
 
-    private final DepartmentRepository departmentRepository;
-    private final EmployeeRepository employeeRepository;
+    @Autowired
+    private EmployeeRepository employeeRepository;
 
-    public TransactionServiceImpl(DepartmentRepository departmentRepository, EmployeeRepository employeeRepository) {
-        this.departmentRepository = departmentRepository;
-        this.employeeRepository = employeeRepository;
-    }
-    private String generateEmployeeId() {
-        long count = employeeRepository.count() + 1;
-        return String.format("emp%03d", count); // emp001, emp002...
-    }
-
-    private String generateDepartmentId() {
-        long count = departmentRepository.count() + 1;
-        return String.format("dept%02d", count); // dept01, dept02...
-    }
+    @Autowired
+    private DepartmentRepository departmentRepository;
 
     @Override
     @Transactional
     public Employee createDepartmentAndEmployee(Department department, Employee employee) {
-        department.setDepartmentId(generateDepartmentId());
-        Department savedDept = departmentRepository.save(department);
+        System.out.println("[DEBUG] Starting transaction to create employee with department");
 
+        if (department == null) {
+            throw new IllegalArgumentException("Department object is null");
+        }
+        if (employee == null) {
+            throw new IllegalArgumentException("Employee object is null");
+        }
 
+        System.out.println("[DEBUG] Department ID: " + department.getId());
 
-        return employeeRepository.save(employee);
+        Department existingDept = departmentRepository.findById(department.getId())
+                .orElseThrow(() -> new RuntimeException("Department not found: " + department.getId()));
+
+        System.out.println("[DEBUG] Department found: " + existingDept.getName());
+
+        // Use provided ID if present, otherwise auto-generate
+        if (employee.getId() == null || employee.getId().isBlank()) {
+            long count = employeeRepository.count() + 1;
+            String generatedId = String.format("emp%03d", count);
+            employee.setId(generatedId);
+            System.out.println("[DEBUG] Auto-generated Employee ID: " + generatedId);
+        } else {
+            System.out.println("[DEBUG] Provided Employee ID: " + employee.getId());
+            // Check for duplicate ID
+            if (employeeRepository.existsById(employee.getId())) {
+                throw new RuntimeException("Employee ID already exists: " + employee.getId());
+            }
+        }
+
+        employee.setDepartment(existingDept);
+        Employee savedEmployee = employeeRepository.save(employee);
+
+        System.out.println("[DEBUG] Employee saved: " + savedEmployee);
+
+        // Uncomment to simulate rollback
+        if (employee.getId().equals("empFail")) throw new RuntimeException("Simulated failure");
+
+        System.out.println("[DEBUG] Transaction completed successfully with ID: " + savedEmployee.getId());
+
+        return savedEmployee;
     }
-
 }

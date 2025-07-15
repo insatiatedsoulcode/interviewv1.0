@@ -1,3 +1,4 @@
+// ✅ BASE URL for Spring Boot backend
 const API_URL = 'http://localhost:8080/api/employees';
 
 function searchEmployees() {
@@ -7,20 +8,18 @@ function searchEmployees() {
         return;
     }
 
-    // Make sure this matches your controller: /api/employees/by-department/{deptId}
-    fetch(`${API_URL}/by-department/${deptId}`)
+    fetch(`${API_URL}/by-department/${deptId}`)  // Correct path for @PathVariable
         .then(res => {
-            if (!res.ok) {
-                throw new Error('No employees found or invalid Department ID');
-            }
+            if (!res.ok) throw new Error('No employees found or invalid department ID');
             return res.json();
         })
         .then(data => {
+            console.log("Fetched employees:", data);
             populateTable(data);
         })
         .catch(err => {
             console.error('Error fetching employees:', err);
-            alert(err.message || 'Failed to fetch employee data.');
+            alert('Failed to load employees. Check department ID or server.');
             document.getElementById('employeeTableBody').innerHTML = '';
         });
 }
@@ -34,8 +33,9 @@ function populateTable(employees) {
 
         row.innerHTML = `
             <td>${emp.id}</td>
-            <td>${emp.name}</td>
-            <td>${emp.position}</td>
+            <td>${emp.name || 'N/A'}</td>
+            <td>${emp.position || 'N/A'}</td>
+
             <td>
                 <button onclick='viewEmployee(${JSON.stringify(emp)})'>View</button>
                 <button onclick='editEmployee(${JSON.stringify(emp)})'>Edit</button>
@@ -47,6 +47,7 @@ function populateTable(employees) {
     });
 }
 
+// Modal-related functions (same as before)...
 function viewEmployee(emp) {
     setupModal(emp, false);
 }
@@ -58,9 +59,9 @@ function editEmployee(emp) {
 function setupModal(emp, editable) {
     document.getElementById('modalTitle').textContent = editable ? 'Edit Employee' : 'Employee Details';
     document.getElementById('modalEmpId').value = emp.id;
-    document.getElementById('modalName').value = emp.name;
-    document.getElementById('modalPosition').value = emp.position;
-    document.getElementById('modalEmail').value = emp.email;
+    document.getElementById('modalName').value = emp.name || '';
+    document.getElementById('modalPosition').value = emp.position || '';
+    document.getElementById('modalEmail').value = emp.email || '';
 
     document.getElementById('modalName').disabled = !editable;
     document.getElementById('modalPosition').disabled = !editable;
@@ -127,7 +128,7 @@ function closeModal() {
     document.getElementById('employeeModal').style.display = 'none';
 }
 
-window.onclick = function(event) {
+window.onclick = function (event) {
     const modal = document.getElementById('employeeModal');
     if (event.target === modal) closeModal();
 };
