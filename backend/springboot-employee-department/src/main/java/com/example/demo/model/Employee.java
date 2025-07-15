@@ -33,8 +33,6 @@ public class Employee {
         this.salary = salary;
         this.department = department;
     }
-
-    // Getters and setters
     public String getId() { return id; }
     public void setId(String id) { this.id = id; }
 

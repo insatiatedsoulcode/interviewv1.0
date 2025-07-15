@@ -15,33 +15,31 @@ public class EmployeeController {
     @Autowired
     private EmployeeService employeeService;
 
-    // Create a new employee
     @PostMapping
-    public Employee createEmployee(@RequestBody Employee employee) {
+    public Employee create(@RequestBody Employee employee) {
+        System.out.println("POST /api/employees - Creating employee: " + employee);
         return employeeService.createEmployee(employee);
     }
 
-    // Get all employees
     @GetMapping
-    public List<Employee> getAllEmployees() {
+    public List<Employee> getAll() {
         return employeeService.getAllEmployees();
     }
 
-    // Get employee by ID
     @GetMapping("/{id}")
-    public Employee getEmployeeById(@PathVariable String id) {
+    public Employee getById(@PathVariable String id) {
         return employeeService.getEmployeeById(id);
     }
 
-    // Update employee by ID
     @PutMapping("/{id}")
-    public Employee updateEmployee(@PathVariable String id, @RequestBody Employee employee) {
+    public Employee update(@PathVariable String id, @RequestBody Employee employee) {
+        System.out.println("PUT /api/employees/" + id + " - Updating employee: " + employee);
         return employeeService.updateEmployee(id, employee);
     }
 
-    // Delete employee by ID
     @DeleteMapping("/{id}")
-    public void deleteEmployee(@PathVariable String id) {
+    public void delete(@PathVariable String id) {
+        System.out.println("DELETE /api/employees/" + id + " - Deleting employee");
         employeeService.deleteEmployee(id);
     }
 }
