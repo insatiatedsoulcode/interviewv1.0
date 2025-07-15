@@ -1,136 +1,99 @@
-// ✅ BASE URL for Spring Boot backend
-const API_URL = 'http://localhost:8080/api/employees';
+let employeeModal = new bootstrap.Modal(document.getElementById('employeeModal'));
+let currentEmployeeId = null;
 
 function searchEmployees() {
-    const deptId = document.getElementById('deptInput').value.trim();
-    if (!deptId) {
-        alert('Please enter a Department ID');
-        return;
-    }
+    const deptId = document.getElementById("deptInput").value.trim();
+    if (!deptId) return alert("Please enter a department ID");
 
-    fetch(`${API_URL}/by-department/${deptId}`)  // Correct path for @PathVariable
-        .then(res => {
-            if (!res.ok) throw new Error('No employees found or invalid department ID');
-            return res.json();
-        })
+    fetch(`http://localhost:8080/api/employees/by-department/${deptId}`)
+        .then(res => res.json())
         .then(data => {
-            console.log("Fetched employees:", data);
-            populateTable(data);
+            const tbody = document.getElementById("employeeTableBody");
+            tbody.innerHTML = "";
+            if (!data || data.length === 0) {
+                tbody.innerHTML = "<tr><td colspan='4' class='text-center'>No employees found</td></tr>";
+                return;
+            }
+
+            data.forEach(employee => {
+                const row = `<tr>
+                    <td>${employee.id}</td>
+                    <td>${employee.name}</td>
+                    <td>${employee.position}</td>
+                    <td>
+                        <button class="btn btn-info btn-sm" onclick="viewEmployee('${employee.id}')">View</button>
+                        <button class="btn btn-warning btn-sm" onclick="editEmployee('${employee.id}')">Edit</button>
+                        <button class="btn btn-danger btn-sm" onclick="deleteEmployee('${employee.id}')">Delete</button>
+                    </td>
+                </tr>`;
+                tbody.innerHTML += row;
+            });
         })
         .catch(err => {
-            console.error('Error fetching employees:', err);
-            alert('Failed to load employees. Check department ID or server.');
-            document.getElementById('employeeTableBody').innerHTML = '';
+            console.error("Error fetching employees", err);
+            alert("Failed to load employee data");
         });
 }
 
-function populateTable(employees) {
-    const tbody = document.getElementById('employeeTableBody');
-    tbody.innerHTML = '';
-
-    employees.forEach(emp => {
-        const row = document.createElement('tr');
-
-        row.innerHTML = `
-            <td>${emp.id}</td>
-            <td>${emp.name || 'N/A'}</td>
-            <td>${emp.position || 'N/A'}</td>
-
-            <td>
-                <button onclick='viewEmployee(${JSON.stringify(emp)})'>View</button>
-                <button onclick='editEmployee(${JSON.stringify(emp)})'>Edit</button>
-                <button onclick='deleteEmployee("${emp.id}")'>Delete</button>
-            </td>
-        `;
-
-        tbody.appendChild(row);
-    });
+function viewEmployee(id) {
+    fetch(`http://localhost:8080/api/employees/${id}`)
+        .then(res => res.json())
+        .then(emp => {
+            document.getElementById("empId").value = emp.id;
+            document.getElementById("empName").value = emp.name;
+            document.getElementById("empEmail").value = emp.email;
+            document.getElementById("empRole").value = emp.position;
+            document.getElementById("empSalary").value = emp.salary;
+            currentEmployeeId = emp.id;
+            employeeModal.show();
+        });
 }
 
-// Modal-related functions (same as before)...
-function viewEmployee(emp) {
-    setupModal(emp, false);
+function editEmployee(id) {
+    viewEmployee(id);
 }
 
-function editEmployee(emp) {
-    setupModal(emp, true);
-}
-
-function setupModal(emp, editable) {
-    document.getElementById('modalTitle').textContent = editable ? 'Edit Employee' : 'Employee Details';
-    document.getElementById('modalEmpId').value = emp.id;
-    document.getElementById('modalName').value = emp.name || '';
-    document.getElementById('modalPosition').value = emp.position || '';
-    document.getElementById('modalEmail').value = emp.email || '';
-
-    document.getElementById('modalName').disabled = !editable;
-    document.getElementById('modalPosition').disabled = !editable;
-    document.getElementById('modalEmail').disabled = !editable;
-    document.getElementById('modalSaveBtn').style.display = editable ? 'inline-block' : 'none';
-
-    openModal();
-}
-
-function deleteEmployee(empId) {
-    if (!confirm('Are you sure you want to delete this employee?')) return;
-
-    fetch(`${API_URL}/${empId}`, { method: 'DELETE' })
-        .then(() => {
-            alert('Employee deleted');
-            searchEmployees();
-        })
-        .catch(err => console.error('Delete failed:', err));
-}
-
-function saveEmployee(event) {
-    event.preventDefault();
-
-    const id = document.getElementById('modalEmpId').value;
-    const name = document.getElementById('modalName').value;
-    const position = document.getElementById('modalPosition').value;
-    const email = document.getElementById('modalEmail').value;
-
-    const updatedEmployee = {
-        id,
-        name,
-        position,
-        email,
-        department: {
-            id: document.getElementById('deptInput').value.trim()
-        }
+function saveEmployee() {
+    const id = document.getElementById("empId").value;
+    const updated = {
+        name: document.getElementById("empName").value,
+        email: document.getElementById("empEmail").value,
+        position: document.getElementById("empRole").value,
+        salary: parseFloat(document.getElementById("empSalary").value),
     };
 
-    fetch(`${API_URL}/${id}`, {
+    fetch(`http://localhost:8080/api/employees/${id}`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(updatedEmployee)
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(updated)
     })
-        .then(res => {
-            if (!res.ok) throw new Error('Update failed');
-            return res.json();
-        })
-        .then(() => {
-            alert('Employee updated successfully!');
-            closeModal();
+        .then(res => res.json())
+        .then(data => {
+            alert("Employee updated successfully!");
+            employeeModal.hide();
             searchEmployees();
         })
         .catch(err => {
-            console.error('Error:', err);
-            alert('Failed to update employee.');
+            console.error("Update failed", err);
+            alert("Failed to update employee.");
         });
 }
 
-function openModal() {
-    document.getElementById('employeeModal').style.display = 'block';
+function deleteEmployee(id) {
+    if (confirm("Are you sure you want to delete this employee?")) {
+        fetch(`http://localhost:8080/api/employees/${id}`, {
+            method: 'DELETE'
+        })
+        .then(res => {
+            if (res.ok) {
+                alert("Employee deleted");
+                searchEmployees();
+            } else {
+                alert("Delete failed");
+            }
+        })
+        .catch(err => {
+            console.error("Error deleting", err);
+        });
+    }
 }
-
-function closeModal() {
-    document.getElementById('employeeModal').style.display = 'none';
-}
-
-window.onclick = function (event) {
-    const modal = document.getElementById('employeeModal');
-    if (event.target === modal) closeModal();
-};
-
-document.getElementById('modalForm').addEventListener('submit', saveEmployee);
